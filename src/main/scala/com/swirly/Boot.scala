@@ -8,6 +8,7 @@ import akka.actor.{ActorSystem, Props}
 import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
+import com.swirly.actors.RouterActor
 import com.typesafe.config.ConfigFactory
 import spray.can.Http
 
@@ -19,11 +20,11 @@ object Boot extends App {
 
   val addr = Try{conf.getString("mist.host")}
   val port = Try{conf.getString("mist.port")}
-  println(s"Mist server at $addr:$port")
+  println(s"Mist server at ${addr.get}:${port.get}")
 
   implicit val system = ActorSystem("swirlish")
 
-  val service = system.actorOf(Props[RouterActor], "router")
+  val service = system.actorOf(Props(classOf[RouterActor], conf), "router")
 
   val timeoutDuration = Try {conf.getInt("spray.can.server.request-timeout")}
   implicit val timeout =  timeoutDuration match {
