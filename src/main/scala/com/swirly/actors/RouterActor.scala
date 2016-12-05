@@ -1,7 +1,9 @@
 package com.swirly.actors
 
+import java.io.File
+
 import akka.actor.Actor
-import com.typesafe.config.Config
+import com.typesafe.config.{Config, ConfigFactory}
 import spray.http.MediaTypes._
 import spray.httpx.SprayJsonSupport._
 import spray.json.DefaultJsonProtocol._
@@ -19,36 +21,39 @@ class RouterActor(val conf: Config) extends Actor with RouterService{
 }
 
 trait RouterService extends HttpService {
+  import scala.collection.JavaConversions._
   def hostUrl :String
 
   val routes =
-    path("jobs"){
+    path("jobs") {
       get {
         respondWithMediaType(`application/json`) {
           complete {
-            Map(
-              "Tweets" -> s"$hostUrl/tweets",
-              "Stats" -> s"$hostUrl/stats",
-              "Training" -> s"$hostUrl/train"
-            )
+            val sysProps = System.getProperties
+            val routesConf = ConfigFactory.parseFile(new File("src/main/resources/routes.conf"))
+            val root = routesConf.root()
+            val routes = root.filter { x =>
+              !sysProps.containsKey(x._1)
+            }
+            routes.keys.toList
           }
         }
       }
     } ~
-    path("schedule") {
-      get {
-        respondWithMediaType(`application/json`) {
-          complete {
-            ("Hello", "My man")
-          }
-        }
-      } ~
-        post {
-          entity(as[String]) { data =>
-            respondWithMediaType(`application/json`) {
-              complete(s"$data recieved")
+      path("schedule") {
+        get {
+          respondWithMediaType(`application/json`) {
+            complete {
+              ("Hello", "My man")
             }
           }
-        }
-    }
+        } ~
+          post {
+            entity(as[String]) { data =>
+              respondWithMediaType(`application/json`) {
+                complete(s"$data recieved")
+              }
+            }
+          }
+      }
 }
