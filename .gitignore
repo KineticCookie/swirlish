@@ -66,3 +66,7 @@ project/plugins/project/
 # Scala-IDE specific
 .scala_dependencies
 .worksheet
+
+# Frontend parts
+src/main/js/node_modules/*
+src/main/js/dist/*
