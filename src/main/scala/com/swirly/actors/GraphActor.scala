@@ -1,5 +1,7 @@
 package com.swirly.actors
 
+import java.util.UUID
+
 import akka.actor.Actor
 import akka.event.Logging
 import com.swirly.messages._
@@ -8,12 +10,15 @@ import com.swirly.messages._
   */
 class GraphActor extends Actor {
   val log = Logging(context.system, this)
+  log.info("GraphActor created")
 
   override def receive: Receive = {
     case StartGraph =>
-      log.debug(s"Start graph recieved")
+      log.info(s"Start graph recieved")
 
-    case GetCurrentJob(userId) =>
-      log.debug(s"GetCurrentJob for user($userId)")
+    case GetCurrentJob =>
+      val id = UUID.randomUUID
+      log.info(s"GetCurrentJob returns $id")
+      sender ! id
   }
 }
