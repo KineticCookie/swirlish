@@ -20,5 +20,9 @@ class GraphActor extends Actor {
       val id = UUID.randomUUID
       log.info(s"GetCurrentJob returns $id")
       sender ! id
+
+    case UpdateGraph(graph) =>
+      log.debug("Graph update recieved")
+
   }
 }

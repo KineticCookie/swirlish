@@ -8,7 +8,6 @@ import java.io.File
 import java.util.UUID
 
 import akka.actor.{ActorRef, ActorSystem, Props}
-import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
 import akka.http.scaladsl.Http
@@ -17,10 +16,10 @@ import akka.stream.ActorMaterializer
 import com.swirly.actors.GraphActor
 import com.typesafe.config.ConfigFactory
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import com.swirly.dag.{DAGraph, Node}
 import com.swirly.messages.{GetCurrentJob, UpdateGraph}
 import spray.json._
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
@@ -38,6 +37,7 @@ object Boot extends App {
   implicit val system = ActorSystem("swirlish")
   implicit val materializer = ActorMaterializer()
   implicit val ex = system.dispatcher
+
   var currentGraph: ActorRef = system.actorOf(Props(classOf[GraphActor]), "graph")
 
   val timeoutDuration = Try {
@@ -81,12 +81,33 @@ object Boot extends App {
           complete {
             ("Hello", "My man")
           }
+        } ~
+      path("test") {
+        complete {
+          import com.swirly.dag.DAGraphImplicits._
+
+          val node1 = Node(UUID.randomUUID(), "url1")
+          val node2 = Node(UUID.randomUUID(), "url2")
+          val node3 = Node(UUID.randomUUID(), "url3")
+          val node4 = Node(UUID.randomUUID(), "url4")
+          val nodes = Seq(node1, node2, node3, node4)
+          val edges = Seq(
+            node1 -> node2,
+            node2 -> node4,
+            node3 -> node4,
+            node3 -> node2,
+            node1 -> node3
+          )
+          DAGraph(nodes, edges)
         }
+      }
     } ~
       post {
         path("upload") {
-          entity(as[String]) { data =>
-            currentGraph ! UpdateGraph
+          import com.swirly.dag.DAGraphImplicits._
+
+          entity(as[DAGraph]) { data =>
+            currentGraph ! UpdateGraph(data)
             complete(s"$data recieved")
           }
         }
