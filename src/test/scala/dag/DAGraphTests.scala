@@ -3,7 +3,6 @@ package dag
 import java.util.UUID
 
 import org.scalatest._
-import com.swirly.dag._
 import com.swirly.data.{DAGraph, Node}
 /**
   * Created by bulat on 11.12.16.

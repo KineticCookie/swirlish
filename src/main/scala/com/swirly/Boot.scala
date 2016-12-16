@@ -16,7 +16,6 @@ import akka.stream.ActorMaterializer
 import com.swirly.actors.GraphActor
 import com.typesafe.config.ConfigFactory
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import com.swirly.dag.Node
 import com.swirly.data.{DAGraph, Node}
 import com.swirly.messages.{GetCurrentJob, StartGraph, UpdateGraph}
 import spray.json._

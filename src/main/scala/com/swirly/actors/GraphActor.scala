@@ -19,7 +19,7 @@ import scala.collection.mutable
   */
 class GraphActor extends Actor {
   import com.swirly.utils.MapFormat._
-
+  import com.swirly.data.JobResultImplicits._
   val log = Logging(context.system, this)
   override def preStart = context.system.eventStream.subscribe(self, classOf[MqttActor])
   val conf = ConfigFactory.load()
@@ -62,7 +62,7 @@ class GraphActor extends Actor {
           val client = new MqttClient(s"tcp://$mqttAddr:$mqttPort", MqttClient.generateClientId, persistence)
           client.connect()
           val msgTopic = client.getTopic(s"swirlish#$id")
-          val mqMessage = new MqttMessage(Marshal(result).toJson.toString.getBytes("utf-8"))
+          val mqMessage = new MqttMessage(result.toJson.toString.getBytes("utf-8"))
           msgTopic.publish(mqMessage)
           client.disconnect()
         }
