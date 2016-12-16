@@ -16,23 +16,16 @@ import akka.stream.ActorMaterializer
 import com.swirly.actors.GraphActor
 import com.typesafe.config.ConfigFactory
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import com.swirly.dag.{DAGraph, Node}
-import com.swirly.messages.{GetCurrentJob, UpdateGraph}
+import com.swirly.dag.Node
+import com.swirly.data.{DAGraph, Node}
+import com.swirly.messages.{GetCurrentJob, StartGraph, UpdateGraph}
 import spray.json._
 
 import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
 object Boot extends App {
-  val conf = ConfigFactory.load()
-
-  val addr = Try {
-    conf.getString("mist.host")
-  }
-  val port = Try {
-    conf.getString("mist.port")
-  }
-  println(s"Mist server at ${addr.get}:${port.get}")
+  val conf = ConfigFactory.load("docker.conf")
 
   implicit val system = ActorSystem("swirlish")
   implicit val materializer = ActorMaterializer()
@@ -84,7 +77,7 @@ object Boot extends App {
         } ~
       path("test") {
         complete {
-          import com.swirly.dag.DAGraphImplicits._
+          import com.swirly.data.DAGraphImplicits._
 
           val node1 = Node(UUID.randomUUID(), "url1")
           val node2 = Node(UUID.randomUUID(), "url2")
@@ -100,11 +93,17 @@ object Boot extends App {
           )
           DAGraph(nodes, edges)
         }
+      } ~
+      path("run") {
+        complete {
+          currentGraph ! StartGraph
+          "Started"
+        }
       }
     } ~
       post {
         path("upload") {
-          import com.swirly.dag.DAGraphImplicits._
+          import com.swirly.data.DAGraphImplicits._
 
           entity(as[DAGraph]) { data =>
             currentGraph ! UpdateGraph(data)

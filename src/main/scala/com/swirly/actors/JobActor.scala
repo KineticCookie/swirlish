@@ -1,28 +1,39 @@
 package com.swirly.actors
 
-import akka.actor.Actor
+import java.util.UUID
+
+import akka.actor.{Actor, ActorRef}
 import akka.event.Logging
-import com.swirly.messages.StartJob
-
-import scala.util.Random
-
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.marshalling.Marshal
+import akka.http.scaladsl.model.{HttpMethod, HttpMethods, HttpRequest}
+import com.swirly.data.JobResult
+import com.swirly.messages.{JobFinished, StartJob}
+import spray.json.pimpString
+import spray.json._
 /**
   * Created by Bulat on 02.12.2016.
   */
-class JobActor extends Actor {
+class JobActor(val id: UUID, val connectionString, val route: String) extends Actor {
+  import com.swirly.utils.MapFormat._
+
   val log = Logging(context.system, this)
-
+  val http = Http(context.system)
   override def receive: Receive = {
-    case StartJob =>
-      log.debug("Start job recieved")
-
-      var sum = 0
-      for(x <- 0 to 1000) {
-        sum += Random.nextInt(100)
+    case StartJob(data) =>
+      log.debug(s"JobActor[$id]($route@$connectionString) Started")
+      var senderOriginal = sender()
+      val resp = http.singleRequest(
+        HttpRequest(
+          uri = s"http://$connectionString/api/route",
+          method = HttpMethods.POST,
+          entity = Marshal(data).toJson.toString
+        )
+      )
+      resp.map { resp =>
+        var result = resp.entity.toString.parseJson.convertTo[JobResult]
+        senderOriginal ! JobFinished(id, result.payload)
       }
-      log.debug(s"Job result: $sum")
-      sender() ! sum
-
     case x => log.debug(s"Unidentified message: $x")
   }
 }
