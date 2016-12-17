@@ -1,8 +1,10 @@
 import React from 'react';
 
+import * as config from '../constants/config.js'
+
 const ReactHighcharts = require('react-highcharts');
 
-let io = require('socket.io-client')("http://0.0.0.0:8000");
+let io = require('socket.io-client')(config.SOCKET_IO_HOST);
 
 export default class SocketTest extends React.Component {
     componentDidMount() {
@@ -15,11 +17,6 @@ export default class SocketTest extends React.Component {
         setInterval(function () {
             io.emit('test node', { some: "data" })
         }, 1000);
-    }
-
-
-    handleClick() {
-        io.emit('test node', { some: "data" })
     }
 
     render() {
@@ -35,7 +32,7 @@ export default class SocketTest extends React.Component {
                                     let series = this.series[0];
                                     let shift = series.data.length > 20;
                                     this.series[0].addPoint(point, true, shift);
-                                    console.log("data", point.x)
+                                    //console.log("data", point.x)
                                 }.bind(this));
                             }
                         }
@@ -61,7 +58,6 @@ export default class SocketTest extends React.Component {
                         data: []
                     }]
                 }}/>
-                <button onClick={this.handleClick.bind(this)}>Button</button>
             </div>
         )
     }

@@ -36,10 +36,10 @@ module.exports = {
             { test: /\.(ttf|eot|svg)(\?v=[0-9]\.[0-9]\.[0-9])?$/, loader: "file-loader" },
             { test: /\.jpe?g$|\.gif$|\.png$/i, loader: "file-loader" },
             { loader: 'json-loader', test: /\.json$/}
-        ],
-        noParse: ['ws']
+        ]//,
+        //noParse: ['ws']
     },
-    externals: ['ws'],
+    //externals: ['ws'],
     node: {
         fs: 'empty',
         tls: 'empty'
