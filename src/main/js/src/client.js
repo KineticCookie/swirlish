@@ -13,12 +13,15 @@ import NotFound from './pages/error/NotFound.js';
 
 import Test from './pages/layout/testpage.js';
 
+import JobsList from './pages/jobs/JobsList.js';
+
 render((
     <Provider store={store}>
         <Router history={browserHistory}>
             <Route path="/" component={Base}>
                 <IndexRoute component={Main} />
                 <Route path="/test" component={Test} />
+                <Route path="/jobs" component={JobsList} />
                 <Route path="*" component={NotFound} />
             </Route>
         </Router>

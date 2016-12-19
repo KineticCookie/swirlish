@@ -4,10 +4,11 @@ import * as config from '../constants/config.js'
 
 const ReactHighcharts = require('react-highcharts');
 
-let io = require('socket.io-client')(config.SOCKET_IO_HOST);
 
 export default class SocketTest extends React.Component {
     componentDidMount() {
+        let io = require('socket.io-client')(config.SOCKET_IO_HOST);
+
         io.on('connect', function(){
             console.log("connect")
         });
@@ -28,6 +29,8 @@ export default class SocketTest extends React.Component {
                         defaultSeriesType: 'spline',
                         events: {
                             load: function () {
+                                let io = require('socket.io-client')(config.SOCKET_IO_HOST);
+
                                 io.on('node', function (point) {
                                     let series = this.series[0];
                                     let shift = series.data.length > 20;
