@@ -46,7 +46,6 @@ object Boot extends App {
   val streamActor = system.actorOf(Props(classOf[StreamListenerActor], mqttActor, currentGraph, "swirlish_pub"), Constants.Actors.StreamListener)
 
   import DefaultJsonProtocol._
-
   import scala.collection.JavaConversions._
 
   val routes =
