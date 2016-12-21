@@ -25,7 +25,9 @@ libraryDependencies ++= {
     "org.slf4j" % "slf4j-nop" % "1.6.4",
     "org.scalactic" %% "scalactic" % "3.0.1",
     "org.scalatest" %% "scalatest" % "3.0.1" % "test",
-    "org.eclipse.paho" % "org.eclipse.paho.client.mqttv3" % "1.1.0"
+    "org.eclipse.paho" % "org.eclipse.paho.client.mqttv3" % "1.1.0",
+    "com.sandinh" % "paho-akka_2.11" % "1.3.0"
+
   )
 }
 Revolver.settings

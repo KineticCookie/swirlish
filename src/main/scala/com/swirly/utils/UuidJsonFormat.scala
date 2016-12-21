@@ -2,7 +2,7 @@ package com.swirly.utils
 
 import java.util.UUID
 
-import spray.json.{JsString, JsValue, JsonFormat}
+import spray.json.{DeserializationException, JsString, JsValue, JsonFormat}
 
 /**
   * Created by bulat on 14.12.16.
@@ -13,7 +13,7 @@ object UuidJsonFormat {
 
     def read(value: JsValue) = value match {
       case JsString(x) => UUID.fromString(x)
-      case x => throw new IllegalArgumentException(x.toString) // FIXME exception
+      case x => throw DeserializationException(x.toString)
     }
   }
 
