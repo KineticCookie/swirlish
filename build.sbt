@@ -2,9 +2,11 @@ name := "swirlish"
 
 version := "1.0"
 
-scalaVersion := "2.12.1"
+scalaVersion := "2.11.8"
 
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
+
+resolvers += "MQTT Repository" at "https://repo.eclipse.org/content/repositories/paho-releases/"
 
 libraryDependencies ++= {
   val akkaV = "2.4.14"
@@ -22,7 +24,10 @@ libraryDependencies ++= {
     "com.typesafe" % "config" % "1.2.1",
     "org.slf4j" % "slf4j-nop" % "1.6.4",
     "org.scalactic" %% "scalactic" % "3.0.1",
-    "org.scalatest" %% "scalatest" % "3.0.1" % "test"
+    "org.scalatest" %% "scalatest" % "3.0.1" % "test",
+    "org.eclipse.paho" % "org.eclipse.paho.client.mqttv3" % "1.1.0",
+    "com.sandinh" % "paho-akka_2.11" % "1.3.0"
+
   )
 }
 Revolver.settings

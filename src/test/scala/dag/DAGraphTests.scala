@@ -3,12 +3,12 @@ package dag
 import java.util.UUID
 
 import org.scalatest._
-import com.swirly.dag._
+import com.swirly.data.{DAGraph, Node}
 /**
   * Created by bulat on 11.12.16.
   */
 class DAGraphTests extends FlatSpec with Matchers{
-  import com.swirly.dag.DAGraphImplicits._
+  import com.swirly.data.DAGraphImplicits._
 
   "Kahn algorithm" should "return true for DAG" in {
     val node1 = Node(UUID.randomUUID(), "url1")
@@ -24,7 +24,7 @@ class DAGraphTests extends FlatSpec with Matchers{
       node1 -> node3
     )
     val graph = DAGraph(nodes, edges)
-    graph.Kahn() shouldBe true
+    graph.kahn() shouldBe true
   }
 
   it should "return false for graph with cycles" in {
@@ -40,6 +40,6 @@ class DAGraphTests extends FlatSpec with Matchers{
       node4 -> node2
     )
     val graph = DAGraph(nodes, edges)
-    graph.Kahn() shouldBe false
+    graph.kahn() shouldBe false
   }
 }

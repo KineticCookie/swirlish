@@ -8,48 +8,45 @@ import java.io.File
 import java.util.UUID
 
 import akka.actor.{ActorRef, ActorSystem, Props}
-import akka.pattern.ask
-import akka.util.Timeout
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
-import com.swirly.actors.GraphActor
+import com.sandinh.paho.akka.{MqttPubSub, PSConfig}
+import com.swirly.actors.{GraphActor, StreamListenerActor}
+import com.swirly.data.{DAGraph, Node}
+import com.swirly.messages.UpdateGraph
 import com.typesafe.config.ConfigFactory
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import com.swirly.dag.{DAGraph, Node}
-import com.swirly.messages.{GetCurrentJob, UpdateGraph}
 import spray.json._
 
 import scala.concurrent.duration._
-import scala.util.{Failure, Success, Try}
 
 object Boot extends App {
-  val conf = ConfigFactory.load()
+  val conf = ConfigFactory.load(Constants.Paths.Docker)
 
-  val addr = Try {
-    conf.getString("mist.host")
-  }
-  val port = Try {
-    conf.getString("mist.port")
-  }
-  println(s"Mist server at ${addr.get}:${port.get}")
-
-  implicit val system = ActorSystem("swirlish")
+  implicit val system = ActorSystem(Constants.Actors.ActorSystem)
   implicit val materializer = ActorMaterializer()
   implicit val ex = system.dispatcher
 
-  var currentGraph: ActorRef = system.actorOf(Props(classOf[GraphActor]), "graph")
+  val mqttAddr = "172.17.0.2"//conf.getString("mist.mqtt.host")
+  val mqttPort = conf.getString(Constants.Config.Mist.Mqtt.Port)
 
-  val timeoutDuration = Try {
-    conf.getInt("spray.can.server.request-timeout")
-  }
-  implicit val timeout = timeoutDuration match {
-    case Success(value) => Timeout(value.seconds)
-    case Failure(_) => Timeout(5.seconds)
-  }
+  val mqttActor = system.actorOf(Props(classOf[MqttPubSub], PSConfig(
+    brokerUrl = s"tcp://$mqttAddr:$mqttPort",
+    userName = null,
+    password = null,
+    stashTimeToLive = 1.minute,
+    stashCapacity = 8000, //stash messages will be drop first haft elems when reach this size
+    reconnectDelayMin = 10.millis, //for fine tuning re-connection logic
+    reconnectDelayMax = 30.seconds
+  )), Constants.Actors.Mqtt)
 
-  import scala.collection.JavaConversions._
+  val currentGraph = system.actorOf(Props(classOf[GraphActor], mqttActor), Constants.Actors.Graph)
+
+  val streamActor = system.actorOf(Props(classOf[StreamListenerActor], mqttActor, currentGraph, "swirlish_pub"), Constants.Actors.StreamListener)
+
   import DefaultJsonProtocol._
+  import scala.collection.JavaConversions._
 
   val routes =
     get {
@@ -64,39 +61,29 @@ object Boot extends App {
           routes.keys.toList
         }
       } ~
-        path("current") {
-          val status = (currentGraph ? GetCurrentJob).mapTo[UUID]
-          onComplete(status) {
-            case Success(data) =>
-              complete {
-                data.toString
-              }
-            case Failure(_) =>
-              complete {
-                "Operation failed"
-              }
-          }
-        } ~
-        path("status") {
+        path("available2") {
           complete {
-            ("Hello", "My man")
+            val routesConf = ConfigFactory.parseFile(new File("src/main/resources/routes.conf"))
+            val keys = routesConf.root().keys.toList
+            val res = keys.map{ k =>
+              val job = "job" -> k
+              val namespace = "namespace" -> routesConf.getString(s"$k.namespace")
+              Map(job, namespace)
+            }
+            res
           }
         } ~
       path("test") {
         complete {
-          import com.swirly.dag.DAGraphImplicits._
+          import com.swirly.data.DAGraphImplicits._
 
-          val node1 = Node(UUID.randomUUID(), "url1")
-          val node2 = Node(UUID.randomUUID(), "url2")
-          val node3 = Node(UUID.randomUUID(), "url3")
-          val node4 = Node(UUID.randomUUID(), "url4")
-          val nodes = Seq(node1, node2, node3, node4)
+          val node1 = Node(UUID.randomUUID(), "sum")
+          val node2 = Node(UUID.randomUUID(), "square")
+          val node3 = Node(UUID.randomUUID(), "double")
+          val nodes = Seq(node1, node2, node3)
           val edges = Seq(
             node1 -> node2,
-            node2 -> node4,
-            node3 -> node4,
-            node3 -> node2,
-            node1 -> node3
+            node2 -> node3
           )
           DAGraph(nodes, edges)
         }
@@ -104,7 +91,7 @@ object Boot extends App {
     } ~
       post {
         path("upload") {
-          import com.swirly.dag.DAGraphImplicits._
+          import com.swirly.data.DAGraphImplicits._
 
           entity(as[DAGraph]) { data =>
             currentGraph ! UpdateGraph(data)

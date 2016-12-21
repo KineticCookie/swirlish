@@ -1,8 +1,8 @@
-package com.swirly.dag
+package com.swirly.data
 
 import java.util.UUID
 
-import spray.json.DefaultJsonProtocol
+import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
 import scala.collection.mutable.ListBuffer
 
@@ -15,8 +15,18 @@ case class Link(source: UUID, destination: UUID) {
 }
 
 case class DAGraph(nodes: Seq[Node], links: Seq[Link]) {
-  def in (node: Node): Seq[Link] = ???
-  def out(node: Node): Seq[Link] = ???
+  def in (node: Node): Seq[Link] = in(node.uid)
+  def out(node: Node): Seq[Link] = out(node.uid)
+
+  def in(id: UUID): Seq[Link] = links.filter(_.destination == id)
+  def out(id: UUID): Seq[Link] = links.filter(_.source == id)
+
+  def roots: Seq[Node] = {
+    val destinations = links.map(_.destination)
+    nodes.filter(x => !destinations.contains(x.uid))
+  }
+
+  def root: Node = roots.head
 
   /**
     * returns true if graph has no cycles;
@@ -24,13 +34,8 @@ case class DAGraph(nodes: Seq[Node], links: Seq[Link]) {
     *
     * @return Boolean
     */
-  def Kahn(): Boolean = {
-    def getRoots(): Seq[Node] = {
-      val destinations = links.map(_.destination)
-      nodes.filter(x => !destinations.contains(x.uid))
-    }
-
-    var S = getRoots().to[ListBuffer]
+  def kahn(): Boolean = {
+    var S = roots.to[ListBuffer]
     var edges = links.to[ListBuffer]
     val L = new ListBuffer[Node]()
 
@@ -55,7 +60,7 @@ object DAGraphImplicits extends DefaultJsonProtocol {
   implicit def pairToLink(t : (Node, Node)) : Link = Link(t._1.uid, t._2.uid)
   implicit def seqPairToLink(s: Seq[(Node, Node)]): Seq[Link] =  s.map((t) => Link(t._1.uid, t._2.uid))
 
-  implicit val nodeFormat = jsonFormat2(Node)
-  implicit val linkFormat = jsonFormat2(Link)
-  implicit val graphFromat = jsonFormat2(DAGraph)
+  implicit val nodeFormat: RootJsonFormat[Node] = jsonFormat2(Node)
+  implicit val linkFormat: RootJsonFormat[Link] = jsonFormat2(Link)
+  implicit val graphFromat: RootJsonFormat[DAGraph] = jsonFormat2(DAGraph)
 }
