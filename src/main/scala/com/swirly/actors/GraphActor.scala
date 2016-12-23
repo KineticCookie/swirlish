@@ -59,7 +59,7 @@ class GraphActor(val mqttAck: ActorRef) extends Actor {
         parameters = data,
         externalId = Some(n.uid.toString)
       )
-      mqttAck ! Publish("swirlish_pub", request.toJson.toString.getBytes(Constants.StringEncoding), 0)
+      mqttAck ! Publish(conf.getString(Constants.Config.Mist.Mqtt.SubscribeTopic), request.toJson.toString.getBytes(Constants.StringEncoding), 0)
 
     }
   }

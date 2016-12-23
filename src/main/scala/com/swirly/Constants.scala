@@ -15,7 +15,8 @@ object Constants {
   }
 
   object Paths {
-    final val Docker = "docker.conf"
+    final val Docker = "configs/docker.conf"
+    final val Routes = "configs/routes.conf"
   }
 
   object Config {

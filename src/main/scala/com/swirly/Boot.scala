@@ -28,8 +28,9 @@ object Boot extends App {
   implicit val materializer = ActorMaterializer()
   implicit val ex = system.dispatcher
 
-  val mqttAddr = "172.17.0.2"//conf.getString("mist.mqtt.host")
+  val mqttAddr = conf.getString(Constants.Config.Mist.Mqtt.Host)
   val mqttPort = conf.getString(Constants.Config.Mist.Mqtt.Port)
+  val mqttListenTopic = conf.getString(Constants.Config.Mist.Mqtt.PublishTopic)
 
   val mqttActor = system.actorOf(Props(classOf[MqttPubSub], PSConfig(
     brokerUrl = s"tcp://$mqttAddr:$mqttPort",
@@ -43,14 +44,14 @@ object Boot extends App {
 
   val currentGraph = system.actorOf(Props(classOf[GraphActor], mqttActor), Constants.Actors.Graph)
 
-  val streamActor = system.actorOf(Props(classOf[StreamListenerActor], mqttActor, currentGraph, "swirlish_pub"), Constants.Actors.StreamListener)
+  val streamActor = system.actorOf(Props(classOf[StreamListenerActor], mqttActor, currentGraph, mqttListenTopic), Constants.Actors.StreamListener)
 
   val routes =
     get {
       path("available") {
         complete {
           val sysProps = System.getProperties
-          val routesConf = ConfigFactory.parseFile(new File("src/main/resources/routes.conf"))
+          val routesConf = ConfigFactory.parseFile(new File(Constants.Paths.Routes))
           val root = routesConf.root()
           val routes = root.filter { x =>
             !sysProps.containsKey(x._1)
@@ -60,7 +61,7 @@ object Boot extends App {
       } ~
         path("available2") {
           complete {
-            val routesConf = ConfigFactory.parseFile(new File("src/main/resources/routes.conf"))
+            val routesConf = ConfigFactory.parseFile(new File(Constants.Paths.Routes))
             val keys = routesConf.root().keys.toList
             val res = keys.map{ k =>
               val job = "job" -> k
@@ -93,5 +94,5 @@ object Boot extends App {
         }
       }
 
-  Http().bindAndHandle(routes, "localhost", 8080)
+  Http().bindAndHandle(routes, "0.0.0.0", 8080)
 }
