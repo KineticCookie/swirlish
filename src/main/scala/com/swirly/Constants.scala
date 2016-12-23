@@ -4,6 +4,8 @@ package com.swirly
   * Created by bulat on 21.12.16.
   */
 object Constants {
+  final var StringEncoding = "utf-8"
+
   object Actors {
     final val ActorSystem = "Swirlish"
     final val Graph = "GraphActor"

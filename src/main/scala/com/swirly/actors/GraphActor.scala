@@ -4,7 +4,7 @@ import akka.actor.{Actor, ActorRef}
 import akka.event.Logging
 import com.sandinh.paho.akka.Publish
 import com.swirly.Constants
-import com.swirly.data.{DAGraph, JobRequest}
+import com.swirly.data.{DAGraph, JobRequest, Node}
 import com.swirly.messages._
 import com.typesafe.config.ConfigFactory
 
@@ -21,20 +21,10 @@ class GraphActor(val mqttAck: ActorRef) extends Actor {
   def evaluate(graph :DAGraph): Receive = {
 
     case StreamData(payload) =>
-      import spray.json._
-
       log.info("Recieved streaming job data...")
 
       val roots = graph.roots
-      roots.foreach { n =>
-        val request = JobRequest(
-          route = n.url,
-          parameters = payload,
-          externalId = Some(n.uid.toString)
-        )
-        mqttAck ! Publish("swirlish_pub", request.toJson.toString().getBytes("utf-8"), 0)
-      }
-
+      sendJobRequest(roots, payload)
 
     case JobFinished(uuid, result) =>
       log.info("Recieved job result data...")
@@ -45,26 +35,32 @@ class GraphActor(val mqttAck: ActorRef) extends Actor {
 
       val jobIdx = graph.out(uuid).map(l => l.destination)
       val nextJobs = graph.nodes.filter(n => jobIdx.contains(n.uid))
-      nextJobs.foreach { n =>
-        val request = JobRequest(
-          route = n.url,
-          parameters = result.payload,
-          externalId = Some(n.uid.toString)
-        )
-        mqttAck ! Publish("swirlish_pub", request.toJson.toString.getBytes("utf-8"), 0)
 
-        log.info(s"SEND RESULT swirlish/$uuid")
+      sendJobRequest(nextJobs, result.payload)
 
-        mqttAck ! Publish(s"swirlish/$uuid", result.payload.toJson.toString.getBytes("utf-8"), 0)
-      }
+      log.info(s"Publishing results to swirlish/$uuid")
+
+      mqttAck ! Publish(s"swirlish/$uuid", result.payload.toJson.toString.getBytes(Constants.StringEncoding), 0)
 
   }
 
   def receive: Receive = {
     case UpdateGraph(graph) =>
       log.debug("Graph update recieved")
-      //currentGraph = Some(graph)
       log.debug("Graph updated")
       context.become(evaluate(graph))
+  }
+
+  def sendJobRequest(nodes: Seq[Node], data: Map[String, Any]) = {
+    import spray.json._
+    nodes.foreach { n =>
+      val request = JobRequest(
+        route = n.url,
+        parameters = data,
+        externalId = Some(n.uid.toString)
+      )
+      mqttAck ! Publish("swirlish_pub", request.toJson.toString.getBytes(Constants.StringEncoding), 0)
+
+    }
   }
 }

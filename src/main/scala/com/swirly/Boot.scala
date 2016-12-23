@@ -6,8 +6,7 @@ package com.swirly
 
 import java.io.File
 import java.util.UUID
-
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server.Directives._
@@ -17,11 +16,12 @@ import com.swirly.actors.{GraphActor, StreamListenerActor}
 import com.swirly.data.{DAGraph, Node}
 import com.swirly.messages.UpdateGraph
 import com.typesafe.config.ConfigFactory
-import spray.json._
-
 import scala.concurrent.duration._
 
 object Boot extends App {
+  import scala.collection.JavaConversions._
+  import com.swirly.data.DAGraphImplicits._
+
   val conf = ConfigFactory.load(Constants.Paths.Docker)
 
   implicit val system = ActorSystem(Constants.Actors.ActorSystem)
@@ -44,9 +44,6 @@ object Boot extends App {
   val currentGraph = system.actorOf(Props(classOf[GraphActor], mqttActor), Constants.Actors.Graph)
 
   val streamActor = system.actorOf(Props(classOf[StreamListenerActor], mqttActor, currentGraph, "swirlish_pub"), Constants.Actors.StreamListener)
-
-  import DefaultJsonProtocol._
-  import scala.collection.JavaConversions._
 
   val routes =
     get {
@@ -75,8 +72,6 @@ object Boot extends App {
         } ~
       path("test") {
         complete {
-          import com.swirly.data.DAGraphImplicits._
-
           val node1 = Node(UUID.randomUUID(), "sum")
           val node2 = Node(UUID.randomUUID(), "square")
           val node3 = Node(UUID.randomUUID(), "double")
@@ -91,8 +86,6 @@ object Boot extends App {
     } ~
       post {
         path("upload") {
-          import com.swirly.data.DAGraphImplicits._
-
           entity(as[DAGraph]) { data =>
             currentGraph ! UpdateGraph(data)
             complete(s"$data recieved")

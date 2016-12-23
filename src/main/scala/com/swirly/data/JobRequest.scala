@@ -1,6 +1,5 @@
 package com.swirly.data
 
-import com.swirly.data.FullJobConfigurationImplicits.jsonFormat5
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
 /**
