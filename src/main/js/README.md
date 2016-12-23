@@ -3,14 +3,14 @@ frontend for swirlish project
 
 ### Usage
 
-#### live dev server
+#### dev server with hot reloading
 ```
 npm install
 npm start
 open http://localhost:3000
 ```
 
-#### bundle
+#### create bundle
 ```
 npm run build-prod
 ```

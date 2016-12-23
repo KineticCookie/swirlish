@@ -41,7 +41,6 @@ class GraphActor(val mqttAck: ActorRef) extends Actor {
       log.info(s"Publishing results to swirlish/$uuid")
 
       mqttAck ! Publish(s"swirlish/$uuid", result.payload.toJson.toString.getBytes(Constants.StringEncoding), 0)
-
   }
 
   def receive: Receive = {

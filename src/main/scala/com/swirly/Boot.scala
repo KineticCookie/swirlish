@@ -18,6 +18,7 @@ import com.swirly.messages.UpdateGraph
 import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
 
+
 object Boot extends App {
   import scala.collection.JavaConversions._
   import com.swirly.data.DAGraphImplicits._

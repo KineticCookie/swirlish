@@ -1,6 +1,6 @@
 # Swirlish
 
-[![Build Status](https://travis-ci.org/KineticCookie/swirlish.svg?branch=graph-execution)](https://travis-ci.org/KineticCookie/swirlish)
+[![Build Status](https://travis-ci.org/KineticCookie/swirlish.svg?branch=dev)](https://travis-ci.org/KineticCookie/swirlish)
 
 Apache Spark jobs orchestrator for [Mist](https://github.com/Hydrospheredata/mist).
 

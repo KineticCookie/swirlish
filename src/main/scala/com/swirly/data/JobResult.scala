@@ -1,6 +1,7 @@
 package com.swirly.data
 
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
+
 /**
   * Created by bulat on 16.12.16.
   */
