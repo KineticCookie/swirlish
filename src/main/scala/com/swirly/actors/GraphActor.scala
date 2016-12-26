@@ -3,7 +3,7 @@ package com.swirly.actors
 import akka.actor.{Actor, ActorRef}
 import akka.event.Logging
 import com.sandinh.paho.akka.Publish
-import com.swirly.Constants
+import com.swirly.{Configs, Constants}
 import com.swirly.data.{DAGraph, JobRequest, Node}
 import com.swirly.messages._
 import com.typesafe.config.ConfigFactory
@@ -15,8 +15,6 @@ class GraphActor(val mqttAck: ActorRef) extends Actor {
   import com.swirly.data.JobRequestImplicits._
 
   val log = Logging(context.system, this)
-
-  val conf = ConfigFactory.load(Constants.Paths.Docker)
 
   def evaluate(graph :DAGraph): Receive = {
 
@@ -58,7 +56,7 @@ class GraphActor(val mqttAck: ActorRef) extends Actor {
         parameters = data,
         externalId = Some(n.uid.toString)
       )
-      mqttAck ! Publish(conf.getString(Constants.Config.Mist.Mqtt.SubscribeTopic), request.toJson.toString.getBytes(Constants.StringEncoding), 0)
+      mqttAck ! Publish(Configs.Mist.Mqtt.subscribeTopic, request.toJson.toString.getBytes(Constants.StringEncoding), 0)
 
     }
   }

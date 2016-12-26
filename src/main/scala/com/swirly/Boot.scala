@@ -23,15 +23,13 @@ object Boot extends App {
   import scala.collection.JavaConversions._
   import com.swirly.data.DAGraphImplicits._
 
-  val conf = ConfigFactory.load(Constants.Paths.Docker)
-
   implicit val system = ActorSystem(Constants.Actors.ActorSystem)
   implicit val materializer = ActorMaterializer()
   implicit val ex = system.dispatcher
 
-  val mqttAddr = conf.getString(Constants.Config.Mist.Mqtt.Host)
-  val mqttPort = conf.getString(Constants.Config.Mist.Mqtt.Port)
-  val mqttListenTopic = conf.getString(Constants.Config.Mist.Mqtt.PublishTopic)
+  val mqttAddr = Configs.Mist.Mqtt.host
+  val mqttPort = Configs.Mist.Mqtt.port
+  val mqttListenTopic = Configs.Mist.Mqtt.publishTopic
 
   val mqttActor = system.actorOf(Props(classOf[MqttPubSub], PSConfig(
     brokerUrl = s"tcp://$mqttAddr:$mqttPort",
@@ -49,18 +47,7 @@ object Boot extends App {
 
   val routes =
     get {
-      path("available") {
-        complete {
-          val sysProps = System.getProperties
-          val routesConf = ConfigFactory.parseFile(new File(Constants.Paths.Routes))
-          val root = routesConf.root()
-          val routes = root.filter { x =>
-            !sysProps.containsKey(x._1)
-          }
-          routes.keys.toList
-        }
-      } ~
-        path("available2") {
+        path("available") {
           complete {
             val routesConf = ConfigFactory.parseFile(new File(Constants.Paths.Routes))
             val keys = routesConf.root().keys.toList

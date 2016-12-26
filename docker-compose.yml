@@ -1,6 +1,6 @@
 version: '2'
 services:
-  mqtt:
+  mosquitto:
     image: "toke/mosquitto"
     ports:
      - "1883:1883"
@@ -15,13 +15,13 @@ services:
       - $PWD/jobs/target/scala-2.11/:/jobs
       - $PWD/configs/:/usr/share/mist/configs
     depends_on:
-      - mqtt
+      - mosquitto
 
   swirl:
     build: .
     ports:
-      - "8000:8000"
+      - "8080:8080"
     volumes:
       - $PWD/configs/:/usr/share/swirl/configs
     depends_on:
-      - mqtt
+      - mosquitto
