@@ -8,7 +8,7 @@ services:
 
   mist:
     image: "hydrosphere/mist:master-2.0.0"
-    command: bash -c "/usr/share/mist/bin/mist start job --config /usr/share/mist/configs/docker.conf --route stream"
+    command: /usr/share/mist/bin/mist start job --config /usr/share/mist/configs/docker.conf --route stream
     ports:
       - "2003:2003"
     volumes:
@@ -25,3 +25,4 @@ services:
       - $PWD/configs/:/usr/share/swirl/configs
     depends_on:
       - mosquitto
+      - mist
