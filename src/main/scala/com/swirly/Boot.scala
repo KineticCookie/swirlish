@@ -6,8 +6,7 @@ package com.swirly
 
 import java.io.File
 import java.util.UUID
-
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server.Directives._
@@ -17,19 +16,20 @@ import com.swirly.actors.{GraphActor, StreamListenerActor}
 import com.swirly.data.{DAGraph, Node}
 import com.swirly.messages.UpdateGraph
 import com.typesafe.config.ConfigFactory
-import spray.json._
-
 import scala.concurrent.duration._
 
+
 object Boot extends App {
-  val conf = ConfigFactory.load(Constants.Paths.Docker)
+  import scala.collection.JavaConversions._
+  import com.swirly.data.DAGraphImplicits._
 
   implicit val system = ActorSystem(Constants.Actors.ActorSystem)
   implicit val materializer = ActorMaterializer()
   implicit val ex = system.dispatcher
 
-  val mqttAddr = "172.17.0.2"//conf.getString("mist.mqtt.host")
-  val mqttPort = conf.getString(Constants.Config.Mist.Mqtt.Port)
+  val mqttAddr = Configs.Mist.Mqtt.host
+  val mqttPort = Configs.Mist.Mqtt.port
+  val mqttListenTopic = Configs.Mist.Mqtt.publishTopic
 
   val mqttActor = system.actorOf(Props(classOf[MqttPubSub], PSConfig(
     brokerUrl = s"tcp://$mqttAddr:$mqttPort",
@@ -43,27 +43,13 @@ object Boot extends App {
 
   val currentGraph = system.actorOf(Props(classOf[GraphActor], mqttActor), Constants.Actors.Graph)
 
-  val streamActor = system.actorOf(Props(classOf[StreamListenerActor], mqttActor, currentGraph, "swirlish_pub"), Constants.Actors.StreamListener)
-
-  import DefaultJsonProtocol._
-  import scala.collection.JavaConversions._
+  val streamActor = system.actorOf(Props(classOf[StreamListenerActor], mqttActor, currentGraph, mqttListenTopic), Constants.Actors.StreamListener)
 
   val routes =
     get {
-      path("available") {
-        complete {
-          val sysProps = System.getProperties
-          val routesConf = ConfigFactory.parseFile(new File("src/main/resources/routes.conf"))
-          val root = routesConf.root()
-          val routes = root.filter { x =>
-            !sysProps.containsKey(x._1)
-          }
-          routes.keys.toList
-        }
-      } ~
-        path("available2") {
+        path("available") {
           complete {
-            val routesConf = ConfigFactory.parseFile(new File("src/main/resources/routes.conf"))
+            val routesConf = ConfigFactory.parseFile(new File(Constants.Paths.Routes))
             val keys = routesConf.root().keys.toList
             val res = keys.map{ k =>
               val job = "job" -> k
@@ -75,8 +61,6 @@ object Boot extends App {
         } ~
       path("test") {
         complete {
-          import com.swirly.data.DAGraphImplicits._
-
           val node1 = Node(UUID.randomUUID(), "sum")
           val node2 = Node(UUID.randomUUID(), "square")
           val node3 = Node(UUID.randomUUID(), "double")
@@ -91,8 +75,6 @@ object Boot extends App {
     } ~
       post {
         path("upload") {
-          import com.swirly.data.DAGraphImplicits._
-
           entity(as[DAGraph]) { data =>
             currentGraph ! UpdateGraph(data)
             complete(s"$data recieved")
@@ -100,5 +82,5 @@ object Boot extends App {
         }
       }
 
-  Http().bindAndHandle(routes, "localhost", 8080)
+  Http().bindAndHandle(routes, "0.0.0.0", 8080)
 }

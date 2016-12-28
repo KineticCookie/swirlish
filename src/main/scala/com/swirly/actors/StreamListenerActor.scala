@@ -5,6 +5,7 @@ import java.util.UUID
 import akka.actor.{Actor, ActorRef}
 import akka.event.Logging
 import com.sandinh.paho.akka.{Message, Subscribe, SubscribeAck}
+import com.swirly.Constants
 import com.swirly.data.JobResult
 import com.swirly.messages.{StreamData, _}
 /**
@@ -28,7 +29,7 @@ class StreamListenerActor(val mqttSub: ActorRef, val graphActor: ActorRef, val t
       import spray.json._
       import DefaultJsonProtocol._
 
-      val str = new String(msg.payload, "utf-8")
+      val str = new String(msg.payload, Constants.StringEncoding)
       logger.info(s"Recieved $str @ ${msg.topic}")
 
       val json = str.parseJson

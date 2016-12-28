@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="SBT: io.hydrosphere:mist_2.11:0.6.3:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/io.hydrosphere/mist_2.11/jars/mist_2.11-0.6.3.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/io.hydrosphere/mist_2.11/srcs/mist_2.11-0.6.3-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

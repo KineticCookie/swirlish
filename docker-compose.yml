@@ -1,0 +1,28 @@
+version: '2'
+services:
+  mosquitto:
+    image: "toke/mosquitto"
+    ports:
+     - "1883:1883"
+     - "9001:9001"
+
+  mist:
+    image: "hydrosphere/mist:master-2.0.0"
+    command: /usr/share/mist/bin/mist start job --config /usr/share/mist/configs/docker.conf --route stream
+    ports:
+      - "2003:2003"
+    volumes:
+      - $PWD/jobs/target/scala-2.11/:/jobs
+      - $PWD/configs/:/usr/share/mist/configs
+    depends_on:
+      - mosquitto
+
+  swirl:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - $PWD/configs/:/usr/share/swirl/configs
+    depends_on:
+      - mosquitto
+      - mist
