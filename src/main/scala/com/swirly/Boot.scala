@@ -27,7 +27,7 @@ object Boot extends App {
   implicit val materializer = ActorMaterializer()
   implicit val ex = system.dispatcher
 
-  val mqttAddr = "0.0.0.0"//Configs.Mist.Mqtt.host
+  val mqttAddr = Configs.Mist.Mqtt.host
   val mqttPort = Configs.Mist.Mqtt.port
   val mqttListenTopic = Configs.Mist.Mqtt.publishTopic
 

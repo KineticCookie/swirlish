@@ -2,17 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="8fbdb34f-b38b-47dd-b6c2-316f9574e09c" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/.gitignore" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/scala/DoubleJob.scala" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/scala/MyJob.scala" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/scala/SqrJob.scala" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/main/scala/SumJob.scala" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../configs/docker.conf" afterPath="$PROJECT_DIR$/../configs/docker.conf" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../configs/router.conf" afterPath="$PROJECT_DIR$/../configs/router.conf" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/build.sbt" afterPath="$PROJECT_DIR$/build.sbt" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../src/main/scala/com/swirly/Boot.scala" afterPath="$PROJECT_DIR$/../src/main/scala/com/swirly/Boot.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../src/main/scala/com/swirly/Configs.scala" afterPath="$PROJECT_DIR$/../src/main/scala/com/swirly/Configs.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../src/main/scala/com/swirly/data/DAGraph.scala" afterPath="$PROJECT_DIR$/../src/main/scala/com/swirly/data/DAGraph.scala" />
     </list>
     <ignored path="$PROJECT_DIR$/target/" />
     <ignored path="$PROJECT_DIR$/project/project/target/" />
