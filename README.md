@@ -23,28 +23,34 @@ But there is some issues with it...
 So the true way is to manually launch MQTT broker, Mist and Swirl and link them.
 
 1. Run Mosquitto (with WebSockets configured)
-```bash
-$ docker run --name swirl-mosquitto -d -p 1883:1883 -p 9001:9001 toke/mosquitto
-```
+
+    ```bash
+    $ docker run --name swirl-mosquitto -d -p 1883:1883 -p 9001:9001 toke/mosquitto
+    ```
 
 2. Run Mist and link it to Mosquitto
-```bash
-$ docker run -d --link swirl-mosquitto:mosquitto -p 2003:2003 --name swirl-mist -v  $PWD/jobs/target/scala-2.11/:/jobs -v $PWD/configs/:/usr/share/mist/configs -v $PWD/configs/twitter4j.properties:/usr/share/spark/conf/twitter4j.properties -t hydrosphere/mist:master-2.0.0 mist
-```
+
+    ```bash
+    $ docker run -d --link swirl-mosquitto:mosquitto -p 2003:2003 --name swirl-mist -v  $PWD/jobs/target/scala-2.11/:/jobs -v $PWD/configs/:/usr/share/mist/configs -v $PWD/configs/twitter4j.properties:/usr/share/spark/conf/twitter4j.properties -t hydrosphere/mist:master-2.0.0 mist
+    ```
 
 3. Run Swirl
+
   1. Build
+  
     ```bash
     $ docker build -t swirl:latest .
     ```
-  2. Run
-  ```bash
-  $ docker run -d --link swirl-mosquitto:mosquitto -p 8080:8080 --name swirl -v $PWD/configs/:/usr/share/swirl/configs swirl
-  ```
 
-  Now Swirl API is ready to go.
-  It will listen broker for streaming data from Mist.
-  And send it to the job graph.
+  2. Run
+  
+    ```bash
+    $ docker run -d --link swirl-mosquitto:mosquitto -p 8080:8080 --name swirl -v $PWD/configs/:/usr/share/swirl/configs swirl
+    ```
+
+Now Swirl API is ready to go.
+It will listen broker for streaming data from Mist.
+And send it to the job graph.
 
 ## Example
 First, you need to compile Spark jobs for mist:
