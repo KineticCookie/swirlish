@@ -6,18 +6,21 @@ package com.swirly
 
 import java.io.File
 import java.util.UUID
+
 import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
+import ch.megard.akka.http.cors.CorsSettings
 import com.sandinh.paho.akka.{MqttPubSub, PSConfig}
 import com.swirly.actors.{GraphActor, StreamListenerActor}
 import com.swirly.data.{DAGraph, Node}
 import com.swirly.messages.UpdateGraph
 import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
-
+import akka.http.scaladsl.server.directives.ExecutionDirectives._
+import ch.megard.akka.http.cors.CorsDirectives._
 
 object Boot extends App {
   import scala.collection.JavaConversions._
@@ -45,33 +48,35 @@ object Boot extends App {
 
   val streamActor = system.actorOf(Props(classOf[StreamListenerActor], mqttActor, currentGraph, mqttListenTopic), Constants.Actors.StreamListener)
 
-  val routes =
+  val settings = CorsSettings.defaultSettings
+
+  val routes = cors(settings) {
     get {
-        path("available") {
-          complete {
-            val routesConf = ConfigFactory.parseFile(new File(Constants.Paths.Routes))
-            val keys = routesConf.root().keys.toList
-            val res = keys.map{ k =>
-              val job = "job" -> k
-              val namespace = "namespace" -> routesConf.getString(s"$k.namespace")
-              Map(job, namespace)
-            }
-            res
-          }
-        } ~
-      path("test") {
+      path("available") {
         complete {
-          val node1 = Node(UUID.randomUUID(), "sum")
-          val node2 = Node(UUID.randomUUID(), "square")
-          val node3 = Node(UUID.randomUUID(), "double")
-          val nodes = Seq(node1, node2, node3)
-          val edges = Seq(
-            node1 -> node2,
-            node2 -> node3
-          )
-          DAGraph(nodes, edges)
+          val routesConf = ConfigFactory.parseFile(new File(Constants.Paths.Routes))
+          val keys = routesConf.root().keys.toList
+          val res = keys.map { k =>
+            val job = "job" -> k
+            val namespace = "namespace" -> routesConf.getString(s"$k.namespace")
+            Map(job, namespace)
+          }
+          res
         }
-      }
+      } ~
+        path("test") {
+          complete {
+            val node1 = Node(UUID.randomUUID(), "sum")
+            val node2 = Node(UUID.randomUUID(), "square")
+            val node3 = Node(UUID.randomUUID(), "double")
+            val nodes = Seq(node1, node2, node3)
+            val edges = Seq(
+              node1 -> node2,
+              node2 -> node3
+            )
+            DAGraph(nodes, edges)
+          }
+        }
     } ~
       post {
         path("upload") {
@@ -81,6 +86,6 @@ object Boot extends App {
           }
         }
       }
-
+  }
   Http().bindAndHandle(routes, "0.0.0.0", 8080)
 }
