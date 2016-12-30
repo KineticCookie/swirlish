@@ -39,6 +39,14 @@ class GraphActor(val mqttAck: ActorRef) extends Actor {
       log.info(s"Publishing results to swirlish/$uuid")
 
       mqttAck ! Publish(s"swirlish/$uuid", result.payload.toJson.toString.getBytes(Constants.StringEncoding), 0)
+
+    case UpdateGraph(newGraph) =>
+      log.debug("Graph update recieved")
+      log.debug("Graph updated")
+      context.become(evaluate(newGraph))
+
+    case GetGraph =>
+      sender() ! graph
   }
 
   def receive: Receive = {
@@ -46,6 +54,9 @@ class GraphActor(val mqttAck: ActorRef) extends Actor {
       log.debug("Graph update recieved")
       log.debug("Graph updated")
       context.become(evaluate(graph))
+
+    case GetGraph =>
+      sender() ! DAGraph(links = Seq.empty, nodes = Seq.empty)
   }
 
   def sendJobRequest(nodes: Seq[Node], data: Map[String, Any]) = {

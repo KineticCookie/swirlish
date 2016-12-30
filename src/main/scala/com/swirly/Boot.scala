@@ -12,14 +12,16 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
+import akka.pattern.{ask, pipe}
+import akka.util.Timeout
 import ch.megard.akka.http.cors.CorsSettings
 import com.sandinh.paho.akka.{MqttPubSub, PSConfig}
 import com.swirly.actors.{GraphActor, StreamListenerActor}
 import com.swirly.data.{DAGraph, Node}
-import com.swirly.messages.UpdateGraph
+import com.swirly.messages.{GetGraph, UpdateGraph}
 import com.typesafe.config.ConfigFactory
+
 import scala.concurrent.duration._
-import akka.http.scaladsl.server.directives.ExecutionDirectives._
 import ch.megard.akka.http.cors.CorsDirectives._
 
 object Boot extends App {
@@ -29,6 +31,7 @@ object Boot extends App {
   implicit val system = ActorSystem(Constants.Actors.ActorSystem)
   implicit val materializer = ActorMaterializer()
   implicit val ex = system.dispatcher
+  implicit val timeout = Timeout(10.seconds)
 
   val mqttAddr = Configs.Mist.Mqtt.host
   val mqttPort = Configs.Mist.Mqtt.port
@@ -76,7 +79,15 @@ object Boot extends App {
             )
             DAGraph(nodes, edges)
           }
+        } ~
+      path("current") {
+        val f = currentGraph ? GetGraph
+        onSuccess(f) { graph =>
+          complete {
+            graph.asInstanceOf[DAGraph]
+          }
         }
+      }
     } ~
       post {
         path("upload") {
