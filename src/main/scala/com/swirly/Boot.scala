@@ -50,33 +50,33 @@ object Boot extends App {
 
   val settings = CorsSettings.defaultSettings
 
-  val routes = cors(settings)
+  val routes = cors(settings) {
     get {
-        path("available") {
-          complete {
-            val routesConf = ConfigFactory.parseFile(new File(Constants.Paths.Routes))
-            val keys = routesConf.root().keys.toList
-            val res = keys.map{ k =>
-              val job = "job" -> k
-              val namespace = "namespace" -> routesConf.getString(s"$k.namespace")
-              Map(job, namespace)
-            }
-            res
-          }
-        } ~
-      path("test") {
+      path("available") {
         complete {
-          val node1 = Node(UUID.randomUUID(), "sum")
-          val node2 = Node(UUID.randomUUID(), "square")
-          val node3 = Node(UUID.randomUUID(), "double")
-          val nodes = Seq(node1, node2, node3)
-          val edges = Seq(
-            node1 -> node2,
-            node2 -> node3
-          )
-          DAGraph(nodes, edges)
+          val routesConf = ConfigFactory.parseFile(new File(Constants.Paths.Routes))
+          val keys = routesConf.root().keys.toList
+          val res = keys.map { k =>
+            val job = "job" -> k
+            val namespace = "namespace" -> routesConf.getString(s"$k.namespace")
+            Map(job, namespace)
+          }
+          res
         }
-      }
+      } ~
+        path("test") {
+          complete {
+            val node1 = Node(UUID.randomUUID(), "sum")
+            val node2 = Node(UUID.randomUUID(), "square")
+            val node3 = Node(UUID.randomUUID(), "double")
+            val nodes = Seq(node1, node2, node3)
+            val edges = Seq(
+              node1 -> node2,
+              node2 -> node3
+            )
+            DAGraph(nodes, edges)
+          }
+        }
     } ~
       post {
         path("upload") {
@@ -86,6 +86,6 @@ object Boot extends App {
           }
         }
       }
-
+  }
   Http().bindAndHandle(routes, "0.0.0.0", 8080)
 }
