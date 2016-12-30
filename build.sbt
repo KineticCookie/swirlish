@@ -26,8 +26,8 @@ libraryDependencies ++= {
     "org.scalactic" %% "scalactic" % "3.0.1",
     "org.scalatest" %% "scalatest" % "3.0.1" % "test",
     "org.eclipse.paho" % "org.eclipse.paho.client.mqttv3" % "1.1.0",
-    "com.sandinh" % "paho-akka_2.11" % "1.3.0"
-
+    "com.sandinh" % "paho-akka_2.11" % "1.3.0",
+    "ch.megard" %% "akka-http-cors" % "0.1.10"
   )
 }
 Revolver.settings

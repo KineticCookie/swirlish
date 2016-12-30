@@ -70,3 +70,5 @@ project/plugins/project/
 # Frontend parts
 src/main/js/node_modules/*
 src/main/js/dist/*
+
+configs/twitter4j.properties

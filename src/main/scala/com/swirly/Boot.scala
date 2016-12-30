@@ -6,18 +6,21 @@ package com.swirly
 
 import java.io.File
 import java.util.UUID
+
 import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
+import ch.megard.akka.http.cors.CorsSettings
 import com.sandinh.paho.akka.{MqttPubSub, PSConfig}
 import com.swirly.actors.{GraphActor, StreamListenerActor}
 import com.swirly.data.{DAGraph, Node}
 import com.swirly.messages.UpdateGraph
 import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration._
-
+import akka.http.scaladsl.server.directives.ExecutionDirectives._
+import ch.megard.akka.http.cors.CorsDirectives._
 
 object Boot extends App {
   import scala.collection.JavaConversions._
@@ -45,7 +48,9 @@ object Boot extends App {
 
   val streamActor = system.actorOf(Props(classOf[StreamListenerActor], mqttActor, currentGraph, mqttListenTopic), Constants.Actors.StreamListener)
 
-  val routes =
+  val settings = CorsSettings.defaultSettings
+
+  val routes = cors(settings)
     get {
         path("available") {
           complete {
