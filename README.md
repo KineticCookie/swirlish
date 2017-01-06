@@ -13,77 +13,61 @@ Result of jobs evaluation will be published in Mqtt with `swirlish/${JOB_ID}`.
 There is also a frontend avaiable, but it's currently in early integration stage.
 
 ## How to run
-Swirl depends on Mist and MQTT broker. The easiest way to launch is to use Docker Compose.
-
-```bash
-$ docker-compose up
-```
-But there is some issues with it...
-
-So the true way is to manually launch MQTT broker, Mist and Swirl and link them.
+Swirl depends on Mist and MQTT broker.
 
 1. Run Mosquitto (with WebSockets configured)
 
     ```bash
-    $ docker run --name swirl-mosquitto -d -p 1883:1883 -p 9001:9001 toke/mosquitto
+    docker run --name swirl-mosquitto -d -p 1883:1883 -p 9001:9001 toke/mosquitto
     ```
 
 2. Run Mist and link it to Mosquitto
 
     ```bash
-    $ docker run -d --link swirl-mosquitto:mosquitto -p 2003:2003 --name swirl-mist -v $PWD/jobs/target/scala-2.11/:/jobs -v $PWD/models/:/models -v $PWD/configs/:/usr/share/mist/configs -v $PWD/configs/twitter4j.properties:/usr/share/spark/conf/twitter4j.properties -t hydrosphere/mist:master-2.0.0 mist
+    docker run -d --link swirl-mosquitto:mosquitto -p 2003:2003 --name swirl-mist -v $PWD/jobs/target/scala-2.11/:/jobs -v $PWD/models/:/models -v $PWD/configs/:/usr/share/mist/configs -v $PWD/configs/twitter4j.properties:/usr/share/spark/conf/twitter4j.properties -t hydrosphere/mist:master-2.0.0 mist
     ```
 
-3. Run Swirl
+3. Compile jobs
+
+  ```bash
+  cd jobs
+  sbt package
+  ```
+
+4. Run streaming jobs
+
+  To launch Twitter job you need to create `configs/twitter4j.properties` file with your Twitter OAuth data.
+
+  1. Run Twitter Sentiment job
+  
+    ```bash
+    docker exec -it swirl-mist bash -c "/usr/share/mist/bin/mist start job --config /usr/share/mist/configs/docker.conf --route twittersentiment"
+    ```
+
+  2. Run Swirl streaming job
+  
+    ```bash
+    docker exec -it swirl-mist bash -c "/usr/share/mist/bin/mist start job --config /usr/share/mist/configs/docker.conf --route swirlishjob"
+    ```
+
+5. Run Swirl
 
   1. Build
   
     ```bash
-    $ docker build -t swirl:latest .
+    docker build -t swirl:latest .
     ```
 
   2. Run
   
     ```bash
-    $ docker run -d --link swirl-mosquitto:mosquitto -p 8080:8080 --name swirl -v $PWD/configs/:/usr/share/swirl/configs swirl
+    docker run -d --link swirl-mosquitto:mosquitto -p 8080:8080 --name swirl -v $PWD/configs/:/usr/share/swirl/configs swirl
     ```
 
-Now Swirl API is ready to go.
-It will listen broker for streaming data from Mist.
-And send it to the job graph.
+  Now Swirl API is ready to go.
+  It will listen broker for streaming data from Mist.
+  And send it to the job graph.
 
-## Example
-First, you need to compile Spark jobs for mist:
+6. Frontend
 
-```bash
-$ cd jobs
-$ sbt package
-```
-
-Configuration for jobs is already defined, but if you change job files,
-you need to recompile them and check configurations.
-
-Then follow **How to run** section.
-
-After that you will need to push the graph to `/upload` path with POST request.
-For example you can use this graph:
-```javascript
-{
-  "nodes": [
-    {
-      "uid": "21a4375b-0276-4416-8794-ec0c043c8515",
-      "url": "time"
-    },
-    {
-      "uid": "080073f5-a028-4863-9c51-724e5e6c2f2f",
-      "url": "ratio"
-    },
-    {
-      "uid": "9744feef-95cd-4265-907a-e6c3d58abf52",
-      "url": "avg"
-    }
-  ],
-  "links": []
-}
-```
-Then, listen to the `swirlish/+` topic, there will be all resulting messages.
+  Frontend is available in https://github.com/IceKhan13/swirlish_frontend
