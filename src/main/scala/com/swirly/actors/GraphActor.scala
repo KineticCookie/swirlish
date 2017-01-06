@@ -58,7 +58,7 @@ class GraphActor(val mqttAck: ActorRef) extends Actor {
           }
           val payload = msgs.map(_.payload).reduce(_ ++ _)
           log.info(s"Job ${job.uid} has collected all data. Starting job...")
-          sendJobRequest(job, result.payload)
+          sendJobRequest(job, payload)
         }
       }
 

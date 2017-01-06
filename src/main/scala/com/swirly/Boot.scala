@@ -33,7 +33,7 @@ object Boot extends App {
   implicit val ex = system.dispatcher
   implicit val timeout = Timeout(10.seconds)
 
-  val mqttAddr = Configs.Mist.Mqtt.host
+  val mqttAddr = "0.0.0.0"//Configs.Mist.Mqtt.host
   val mqttPort = Configs.Mist.Mqtt.port
   val mqttListenTopic = Configs.Mist.Mqtt.publishTopic
 

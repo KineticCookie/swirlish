@@ -10,6 +10,7 @@ object RatioJob extends MistJob {
 
     val posToNegRatio = if (neg == 0) 0 else pos/neg
     Map(
+      "data" -> posToNegRatio.toString ,
       "posToNegRatio" -> posToNegRatio.toString
     )
   }

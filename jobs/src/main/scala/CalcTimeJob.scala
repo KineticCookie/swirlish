@@ -10,6 +10,7 @@ object CalcTimeJob extends MistJob {
 
     var avgCalculationTime = if (rddLen == 0) 0 else time/rddLen
     Map(
+      "data" -> avgCalculationTime.toString ,
       "avgCalculationTime" -> avgCalculationTime.toString
     )
   }

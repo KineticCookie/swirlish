@@ -10,6 +10,7 @@ object AvgCountJob extends MistJob {
 
     val avgTweetCount = if (rddLen == 0) 0 else cnt/rddLen
     Map(
+      "data" -> avgTweetCount.toString ,
       "avgTweetCount" -> avgTweetCount.toString
     )
   }
