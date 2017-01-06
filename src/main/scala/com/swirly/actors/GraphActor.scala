@@ -1,14 +1,18 @@
 package com.swirly.actors
 
+import java.util.UUID
+
 import akka.actor.{Actor, ActorRef}
 import akka.event.Logging
 import com.sandinh.paho.akka.Publish
 import com.swirly.{Configs, Constants}
 import com.swirly.data._
 import com.swirly.messages._
+import com.swirly.utils.Time
 import com.typesafe.config.ConfigFactory
 
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 /**
   * Created by Bulat on 02.12.2016.
@@ -18,7 +22,7 @@ class GraphActor(val mqttAck: ActorRef) extends Actor {
 
   val log = Logging(context.system, this)
 
-  def evaluate(graph :DAGraph, msgQueue: Map[Link, mutable.Queue[JobResult]]): Receive = {
+  def evaluate(graph :DAGraph, history: Map[UUID, ListBuffer[HistoryData]], msgQueue: Map[Link, mutable.Queue[JobResult]]): Receive = {
 
     case StreamData(payload) =>
       log.info("Recieved streaming job data...")
@@ -32,7 +36,7 @@ class GraphActor(val mqttAck: ActorRef) extends Actor {
       import DefaultJsonProtocol._
 
       log.info("Recieved job result data...")
-
+      history(uuid) += HistoryData(Time.unixNow, result.payload)
       log.info(s"Publishing results to swirlish/$uuid")
       mqttAck ! Publish(s"swirlish/$uuid", result.payload.toJson.toString.getBytes(Constants.StringEncoding), 0)
 
@@ -61,6 +65,9 @@ class GraphActor(val mqttAck: ActorRef) extends Actor {
           sendJobRequest(job, payload)
         }
       }
+
+    case GetHistory(id) =>
+      sender() ! history(id).toList
 
     case UpdateGraph(newGraph) =>
       updateGraph(newGraph)
@@ -96,7 +103,10 @@ class GraphActor(val mqttAck: ActorRef) extends Actor {
     val msgQueue = graph.links.map { link =>
       link -> mutable.Queue.empty[JobResult]
     }.toMap
+    val history = graph.nodes.map { node =>
+      node.uid -> ListBuffer.empty[HistoryData]
+    }.toMap
     log.debug("Graph updated")
-    context.become(evaluate(graph, msgQueue))
+    context.become(evaluate(graph, history, msgQueue))
   }
 }
