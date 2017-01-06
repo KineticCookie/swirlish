@@ -40,15 +40,15 @@ Swirl depends on Mist and MQTT broker.
 
   1. Run Twitter Sentiment job
   
-  ```bash
-  docker exec -it swirl-mist bash -c "/usr/share/mist/bin/mist start job --config /usr/share/mist/configs/docker.conf --route twittersentiment"
-  ```
+    ```bash
+    docker exec -it swirl-mist bash -c "/usr/share/mist/bin/mist start job --config /usr/share/mist/configs/docker.conf --route twittersentiment"
+    ```
 
   2. Run Swirl streaming job
   
-  ```bash
-  docker exec -it swirl-mist bash -c "/usr/share/mist/bin/mist start job --config /usr/share/mist/configs/docker.conf --route swirlishjob"
-  ```
+    ```bash
+    docker exec -it swirl-mist bash -c "/usr/share/mist/bin/mist start job --config /usr/share/mist/configs/docker.conf --route swirlishjob"
+    ```
 
 5. Run Swirl
 
@@ -69,4 +69,5 @@ Swirl depends on Mist and MQTT broker.
   And send it to the job graph.
 
 6. Frontend
+
   Frontend is available in https://github.com/IceKhan13/swirlish_frontend
