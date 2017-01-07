@@ -1,2 +1,2 @@
 #!/bin/bash
-sbt run
+java -jar swirl.jar
