@@ -1,4 +1,4 @@
-package com.swirl.utils
+package com.swirl.utils.json
 
 import spray.json.{DeserializationException, JsFalse, JsNumber, JsString, JsTrue, JsValue, JsonFormat}
 
@@ -6,7 +6,7 @@ import spray.json.{DeserializationException, JsFalse, JsNumber, JsString, JsTrue
   * Created by bulat on 14.12.16.
   */
 object MapFormat {
-  implicit object AnyJsonFormat extends JsonFormat[Any] {
+  implicit object _AnyJsonFormat extends JsonFormat[Any] {
     def write(x: Any) = x match {
       case n: Int => JsNumber(n)
       case s: String => JsString(s)

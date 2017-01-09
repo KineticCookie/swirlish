@@ -9,25 +9,26 @@ import java.util.UUID
 
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
 import akka.pattern.ask
 import akka.util.Timeout
-import ch.megard.akka.http.cors.CorsDirectives._
 import ch.megard.akka.http.cors.CorsSettings
 import com.sandinh.paho.akka.{MqttPubSub, PSConfig}
 import com.swirl.actors.{GraphActor, MqttActor}
-import com.swirl.data.{DAGraph, HistoryData, Node}
-import com.swirl.messages.Messages.GraphActor.{GetGraph, GetHistory}
-import com.swirl.messages.Messages.MqttActor.UpdateGraph
+import com.swirl.data.dag.{Graph, Node}
+import com.swirl.data.HistoryData
+import com.swirl.Messages.GraphActor.{GetGraph, GetHistory}
+import com.swirl.Messages.MqttActor.UpdateGraph
 import com.typesafe.config.ConfigFactory
 
-import scala.concurrent.duration._
 
 object Boot extends App {
-  import com.swirl.data.DAGraphImplicits._
-
+  import spray.json._
+  import DefaultJsonProtocol._
+  import akka.http.scaladsl.server.Directives._
+  import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+  import ch.megard.akka.http.cors.CorsDirectives._
+  import scala.concurrent.duration._
   import scala.collection.JavaConversions._
 
   implicit val system = ActorSystem(Constants.Actors.ActorSystem)
@@ -77,7 +78,7 @@ object Boot extends App {
               node1 -> node2,
               node2 -> node3
             )
-            DAGraph(nodes, edges)
+            Graph(nodes, edges)
           }
         } ~
         path("current") {
@@ -86,17 +87,16 @@ object Boot extends App {
               val future = graph ? GetGraph
               onSuccess(future) { g =>
                 complete {
-                  g.asInstanceOf[DAGraph]
+                  g.asInstanceOf[Graph]
                 }
               }
             case None =>
               complete {
-                DAGraph(Seq.empty, Seq.empty)
+                Graph(Seq.empty, Seq.empty)
               }
           }
         } ~
         path("history") {
-          import com.swirl.data.HistoryDataImplicits._
           parameter("id") { id =>
             val uuid = UUID.fromString(id)
             currentGraph match {
@@ -117,7 +117,7 @@ object Boot extends App {
     } ~
       post {
         path("upload") {
-          entity(as[DAGraph]) { data =>
+          entity(as[Graph]) { data =>
             val newGraphAck = system.actorOf(Props(classOf[GraphActor], data, mqttActor), Constants.Actors.Graph)
             currentGraph = Some(newGraphAck)
             executorActor ! UpdateGraph(newGraphAck)

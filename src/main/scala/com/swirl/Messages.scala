@@ -1,4 +1,4 @@
-package com.swirl.messages
+package com.swirl
 
 import java.util.UUID
 

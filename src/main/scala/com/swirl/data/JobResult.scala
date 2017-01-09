@@ -10,8 +10,9 @@ case class JobResult(success: Boolean,
                      errors: List[String],
                      request: FullJobConfiguration)
 
-object JobResultImplicits extends DefaultJsonProtocol {
-  import FullJobConfigurationImplicits._
-  import com.swirl.utils.MapFormat._
-  implicit val jobResultFormat: RootJsonFormat[JobResult] = jsonFormat4(JobResult)
+object JobResult extends DefaultJsonProtocol {
+
+  import com.swirl.utils.json.MapFormat._
+
+  implicit val jobResultFormat: RootJsonFormat[JobResult] = jsonFormat4(JobResult.apply)
 }

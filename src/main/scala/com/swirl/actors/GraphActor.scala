@@ -2,8 +2,9 @@ package com.swirl.actors
 
 import akka.actor.ActorRef
 import com.swirl.data._
-import com.swirl.messages.Messages.GraphActor.{GetGraph, GetHistory, StartJob}
-import com.swirl.messages.Messages.MqttActor.{JobFinished, StreamData}
+import com.swirl.data.dag.{Graph, Node}
+import com.swirl.Messages.GraphActor.{GetGraph, GetHistory, StartJob}
+import com.swirl.Messages.MqttActor.{JobFinished, StreamData}
 import com.swirl.utils.Time
 
 import scala.collection.mutable
@@ -12,7 +13,7 @@ import scala.collection.mutable.ListBuffer
 /**
   * Created by Bulat on 02.12.2016.
   */
-class GraphActor(val graph: DAGraph, val mqttAck: ActorRef) extends LoggableActor {
+class GraphActor(val graph: Graph, val mqttAck: ActorRef) extends LoggableActor {
   val msgQueue = graph.links.map { link =>
     link -> mutable.Queue.empty[JobResult]
   }.toMap

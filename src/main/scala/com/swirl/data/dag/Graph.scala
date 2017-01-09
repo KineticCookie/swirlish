@@ -1,4 +1,4 @@
-package com.swirl.data
+package com.swirl.data.dag
 
 import java.util.UUID
 
@@ -6,15 +6,7 @@ import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
 import scala.collection.mutable.ListBuffer
 
-case class Node(uid: UUID, url: String) {
-  override def toString: String = s"Node $uid //:$url"
-}
-
-case class Link(source: UUID, destination: UUID) {
-  override def toString: String = s"Edge $source -> $destination"
-}
-
-case class DAGraph(nodes: Seq[Node], links: Seq[Link]) {
+case class Graph(nodes: Seq[Node], links: Seq[Link]) {
   def in (node: Node): Seq[Link] = in(node.uid)
   def out(node: Node): Seq[Link] = out(node.uid)
 
@@ -59,12 +51,11 @@ case class DAGraph(nodes: Seq[Node], links: Seq[Link]) {
   }
 }
 
-object DAGraphImplicits extends DefaultJsonProtocol {
-  import com.swirl.utils.UuidJsonFormat._
-  implicit def pairToLink(t : (Node, Node)) : Link = Link(t._1.uid, t._2.uid)
-  implicit def seqPairToLink(s: Seq[(Node, Node)]): Seq[Link] =  s.map((t) => Link(t._1.uid, t._2.uid))
+object Graph extends DefaultJsonProtocol {
 
-  implicit val nodeFormat: RootJsonFormat[Node] = jsonFormat2(Node)
-  implicit val linkFormat: RootJsonFormat[Link] = jsonFormat2(Link)
-  implicit val graphFromat: RootJsonFormat[DAGraph] = jsonFormat2(DAGraph)
+  import com.swirl.utils.json.UuidJsonFormat._
+
+  implicit val nodeFormat: RootJsonFormat[Node] = jsonFormat2(Node.apply)
+  implicit val linkFormat: RootJsonFormat[Link] = jsonFormat2(Link.apply)
+  implicit val graphFormat: RootJsonFormat[Graph] = jsonFormat2(Graph.apply)
 }

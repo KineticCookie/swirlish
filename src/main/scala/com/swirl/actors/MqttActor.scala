@@ -5,18 +5,18 @@ import java.util.UUID
 import akka.actor.ActorRef
 import com.sandinh.paho.akka.{Message, Publish, Subscribe, SubscribeAck}
 import com.swirl.data.JobResult
-import com.swirl.messages.Messages
-import com.swirl.messages.Messages.GraphActor.StartJob
-import com.swirl.messages.Messages.MqttActor.UpdateGraph
+import com.swirl.Messages
+import com.swirl.Messages.GraphActor.StartJob
+import com.swirl.Messages.MqttActor.UpdateGraph
 import com.swirl.{Configs, Constants}
 
 /**
   * Created by bulat on 21.12.16.
   */
 class MqttActor(val mqttAck: ActorRef) extends LoggableActor {
-  import com.swirl.data.JobRequestImplicits._
-  import com.swirl.data.JobResultImplicits._
   import spray.json._
+  import DefaultJsonProtocol._
+  import com.swirl.utils.json.MapFormat._
 
   private val listenTopic = Configs.Mist.Mqtt.publishTopic
   private val publishTopic = Configs.Mist.Mqtt.subscribeTopic
@@ -61,10 +61,6 @@ class MqttActor(val mqttAck: ActorRef) extends LoggableActor {
       mqttAck ! Publish(publishTopic, jobRequest.toJson.toString.getBytes(Constants.StringEncoding), 0)
 
     case msg: Message =>
-      import com.swirl.utils.MapFormat._
-      import spray.json._
-      import DefaultJsonProtocol._
-
       val str = new String(msg.payload, Constants.StringEncoding)
 
       val json = str.parseJson
