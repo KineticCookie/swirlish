@@ -6,27 +6,27 @@ package com.swirly
 
 import java.io.File
 import java.util.UUID
-
 import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
-import akka.pattern.{ask, pipe}
+import akka.pattern.ask
 import akka.util.Timeout
+import ch.megard.akka.http.cors.CorsDirectives._
 import ch.megard.akka.http.cors.CorsSettings
 import com.sandinh.paho.akka.{MqttPubSub, PSConfig}
 import com.swirly.actors.{GraphActor, StreamListenerActor}
-import com.swirly.data.{DAGraph, Node}
-import com.swirly.messages.{GetGraph, UpdateGraph}
+import com.swirly.data.{DAGraph, HistoryData, Node}
+import com.swirly.messages.{GetGraph, GetHistory, UpdateGraph}
 import com.typesafe.config.ConfigFactory
 
 import scala.concurrent.duration._
-import ch.megard.akka.http.cors.CorsDirectives._
 
 object Boot extends App {
-  import scala.collection.JavaConversions._
   import com.swirly.data.DAGraphImplicits._
+
+  import scala.collection.JavaConversions._
 
   implicit val system = ActorSystem(Constants.Actors.ActorSystem)
   implicit val materializer = ActorMaterializer()
@@ -80,14 +80,26 @@ object Boot extends App {
             DAGraph(nodes, edges)
           }
         } ~
-      path("current") {
-        val f = currentGraph ? GetGraph
-        onSuccess(f) { graph =>
-          complete {
-            graph.asInstanceOf[DAGraph]
+        path("current") {
+          val f = currentGraph ? GetGraph
+          onSuccess(f) { graph =>
+            complete {
+              graph.asInstanceOf[DAGraph]
+            }
+          }
+        } ~
+        path("history") {
+          import com.swirly.data.HistoryDataImplicits._
+          parameter("id") { id =>
+            val uuid = UUID.fromString(id)
+            val f = currentGraph ? GetHistory(uuid)
+            onSuccess(f) { aHistory =>
+              complete {
+                aHistory.asInstanceOf[List[HistoryData]]
+              }
+            }
           }
         }
-      }
     } ~
       post {
         path("upload") {
