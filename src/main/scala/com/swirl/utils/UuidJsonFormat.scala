@@ -1,4 +1,4 @@
-package com.swirly.utils
+package com.swirl.utils
 
 import java.util.UUID
 

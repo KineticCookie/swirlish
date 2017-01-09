@@ -1,4 +1,4 @@
-package com.swirly.data
+package com.swirl.data
 
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
@@ -8,6 +8,6 @@ import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 case class HistoryData(time: Long, data: Map[String, Any])
 
 object HistoryDataImplicits extends DefaultJsonProtocol {
-  import com.swirly.utils.MapFormat._
+  import com.swirl.utils.MapFormat._
   implicit val HistoryDataFormat: RootJsonFormat[HistoryData] = jsonFormat2(HistoryData)
 }

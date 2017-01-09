@@ -1,4 +1,4 @@
-package com.swirly.data
+package com.swirl.data
 
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
@@ -12,6 +12,6 @@ case class JobResult(success: Boolean,
 
 object JobResultImplicits extends DefaultJsonProtocol {
   import FullJobConfigurationImplicits._
-  import com.swirly.utils.MapFormat._
+  import com.swirl.utils.MapFormat._
   implicit val jobResultFormat: RootJsonFormat[JobResult] = jsonFormat4(JobResult)
 }

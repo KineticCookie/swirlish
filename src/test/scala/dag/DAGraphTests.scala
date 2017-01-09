@@ -3,12 +3,12 @@ package dag
 import java.util.UUID
 
 import org.scalatest._
-import com.swirly.data.{DAGraph, Node}
+import com.swirl.data.{DAGraph, Node}
 /**
   * Created by bulat on 11.12.16.
   */
 class DAGraphTests extends FlatSpec with Matchers{
-  import com.swirly.data.DAGraphImplicits._
+  import com.swirl.data.DAGraphImplicits._
 
   "Kahn algorithm" should "return true for DAG" in {
     val node1 = Node(UUID.randomUUID(), "url1")

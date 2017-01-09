@@ -1,4 +1,4 @@
-package com.swirly.data
+package com.swirl.data
 
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
@@ -10,6 +10,6 @@ case class JobRequest(route: String,
                  externalId: Option[String] = None)
 
 object JobRequestImplicits extends DefaultJsonProtocol {
-  import com.swirly.utils.MapFormat._
+  import com.swirl.utils.MapFormat._
   implicit val fullJobConfigurationFormat: RootJsonFormat[JobRequest] = jsonFormat3(JobRequest)
 }

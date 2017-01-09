@@ -1,4 +1,4 @@
-package com.swirly.utils
+package com.swirl.utils
 
 /**
   * Created by bulat on 06.01.17.

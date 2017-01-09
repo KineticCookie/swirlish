@@ -1,15 +1,10 @@
-package com.swirly.actors
+package com.swirl.actors
 
-import java.util.UUID
-
-import akka.actor.{Actor, ActorRef}
-import akka.event.Logging
-import com.sandinh.paho.akka.Publish
-import com.swirly.{Configs, Constants}
-import com.swirly.data._
-import com.swirly.messages._
-import com.swirly.utils.Time
-import com.typesafe.config.ConfigFactory
+import akka.actor.ActorRef
+import com.swirl.data._
+import com.swirl.messages.Messages.GraphActor.{GetGraph, GetHistory, StartJob}
+import com.swirl.messages.Messages.MqttActor.{JobFinished, StreamData}
+import com.swirl.utils.Time
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -17,13 +12,15 @@ import scala.collection.mutable.ListBuffer
 /**
   * Created by Bulat on 02.12.2016.
   */
-class GraphActor(val mqttAck: ActorRef) extends Actor {
-  import com.swirly.data.JobRequestImplicits._
+class GraphActor(val graph: DAGraph, val mqttAck: ActorRef) extends LoggableActor {
+  val msgQueue = graph.links.map { link =>
+    link -> mutable.Queue.empty[JobResult]
+  }.toMap
+  val history = graph.nodes.map { node =>
+    node.uid -> ListBuffer.empty[HistoryData]
+  }.toMap
 
-  val log = Logging(context.system, this)
-
-  def evaluate(graph :DAGraph, history: Map[UUID, ListBuffer[HistoryData]], msgQueue: Map[Link, mutable.Queue[JobResult]]): Receive = {
-
+  def receive: Receive = {
     case StreamData(payload) =>
       log.info("Recieved streaming job data...")
 
@@ -31,14 +28,8 @@ class GraphActor(val mqttAck: ActorRef) extends Actor {
       sendJobRequests(roots, payload)
 
     case JobFinished(uuid, result) =>
-      import com.swirly.utils.MapFormat._
-      import spray.json._
-      import DefaultJsonProtocol._
-
       log.info("Recieved job result data...")
       history(uuid) += HistoryData(Time.unixNow, result.payload)
-      log.info(s"Publishing results to swirlish/$uuid")
-      mqttAck ! Publish(s"swirlish/$uuid", result.payload.toJson.toString.getBytes(Constants.StringEncoding), 0)
 
       val outLinks = graph.out(uuid)
       outLinks.foreach { link =>
@@ -69,44 +60,20 @@ class GraphActor(val mqttAck: ActorRef) extends Actor {
     case GetHistory(id) =>
       sender() ! history(id).toList
 
-    case UpdateGraph(newGraph) =>
-      updateGraph(newGraph)
-
     case GetGraph =>
       sender() ! graph
   }
 
-  def receive: Receive = {
-    case UpdateGraph(graph) =>
-      updateGraph(graph)
-
-    case GetGraph =>
-      sender() ! DAGraph(links = Seq.empty, nodes = Seq.empty)
-  }
-
   def sendJobRequest(node: Node, data: Map[String, Any]) = {
-    import spray.json._
     val request = JobRequest(
       route = node.url,
       parameters = data,
       externalId = Some(node.uid.toString)
     )
-    mqttAck ! Publish(Configs.Mist.Mqtt.subscribeTopic, request.toJson.toString.getBytes(Constants.StringEncoding), 0)
+    mqttAck ! StartJob(request)
   }
 
   def sendJobRequests(nodes: Seq[Node], data: Map[String, Any]) = {
     nodes.foreach(sendJobRequest(_, data))
-  }
-
-  def updateGraph(graph: DAGraph) = {
-    log.debug("Graph update recieved")
-    val msgQueue = graph.links.map { link =>
-      link -> mutable.Queue.empty[JobResult]
-    }.toMap
-    val history = graph.nodes.map { node =>
-      node.uid -> ListBuffer.empty[HistoryData]
-    }.toMap
-    log.debug("Graph updated")
-    context.become(evaluate(graph, history, msgQueue))
   }
 }

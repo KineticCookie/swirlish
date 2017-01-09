@@ -1,4 +1,4 @@
-package com.swirly.data
+package com.swirl.data
 
 import java.util.UUID
 
@@ -60,7 +60,7 @@ case class DAGraph(nodes: Seq[Node], links: Seq[Link]) {
 }
 
 object DAGraphImplicits extends DefaultJsonProtocol {
-  import com.swirly.utils.UuidJsonFormat._
+  import com.swirl.utils.UuidJsonFormat._
   implicit def pairToLink(t : (Node, Node)) : Link = Link(t._1.uid, t._2.uid)
   implicit def seqPairToLink(s: Seq[(Node, Node)]): Seq[Link] =  s.map((t) => Link(t._1.uid, t._2.uid))
 

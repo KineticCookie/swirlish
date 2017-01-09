@@ -1,4 +1,4 @@
-package com.swirly
+package com.swirl
 
 /**
   * Created by Bulat on 29.11.2016.
@@ -6,7 +6,8 @@ package com.swirly
 
 import java.io.File
 import java.util.UUID
-import akka.actor.{ActorSystem, Props}
+
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server.Directives._
@@ -16,15 +17,16 @@ import akka.util.Timeout
 import ch.megard.akka.http.cors.CorsDirectives._
 import ch.megard.akka.http.cors.CorsSettings
 import com.sandinh.paho.akka.{MqttPubSub, PSConfig}
-import com.swirly.actors.{GraphActor, StreamListenerActor}
-import com.swirly.data.{DAGraph, HistoryData, Node}
-import com.swirly.messages.{GetGraph, GetHistory, UpdateGraph}
+import com.swirl.actors.{GraphActor, MqttActor}
+import com.swirl.data.{DAGraph, HistoryData, Node}
+import com.swirl.messages.Messages.GraphActor.{GetGraph, GetHistory}
+import com.swirl.messages.Messages.MqttActor.UpdateGraph
 import com.typesafe.config.ConfigFactory
 
 import scala.concurrent.duration._
 
 object Boot extends App {
-  import com.swirly.data.DAGraphImplicits._
+  import com.swirl.data.DAGraphImplicits._
 
   import scala.collection.JavaConversions._
 
@@ -46,13 +48,11 @@ object Boot extends App {
     reconnectDelayMin = 10.millis, //for fine tuning re-connection logic
     reconnectDelayMax = 30.seconds
   )), Constants.Actors.Mqtt)
+  val executorActor = system.actorOf(Props(classOf[MqttActor], mqttActor), Constants.Actors.StreamListener)
 
-  val currentGraph = system.actorOf(Props(classOf[GraphActor], mqttActor), Constants.Actors.Graph)
-
-  val streamActor = system.actorOf(Props(classOf[StreamListenerActor], mqttActor, currentGraph, mqttListenTopic), Constants.Actors.StreamListener)
+  var currentGraph = Option.empty[ActorRef]
 
   val settings = CorsSettings.defaultSettings
-
   val routes = cors(settings) {
     get {
       path("available") {
@@ -81,22 +81,36 @@ object Boot extends App {
           }
         } ~
         path("current") {
-          val f = currentGraph ? GetGraph
-          onSuccess(f) { graph =>
-            complete {
-              graph.asInstanceOf[DAGraph]
-            }
+          currentGraph match {
+            case Some(graph) =>
+              val future = graph ? GetGraph
+              onSuccess(future) { g =>
+                complete {
+                  g.asInstanceOf[DAGraph]
+                }
+              }
+            case None =>
+              complete {
+                DAGraph(Seq.empty, Seq.empty)
+              }
           }
         } ~
         path("history") {
-          import com.swirly.data.HistoryDataImplicits._
+          import com.swirl.data.HistoryDataImplicits._
           parameter("id") { id =>
             val uuid = UUID.fromString(id)
-            val f = currentGraph ? GetHistory(uuid)
-            onSuccess(f) { aHistory =>
-              complete {
-                aHistory.asInstanceOf[List[HistoryData]]
-              }
+            currentGraph match {
+              case Some(graph) =>
+                val future = graph ? GetHistory(uuid)
+                onSuccess(future) { aHistory =>
+                  complete {
+                    aHistory.asInstanceOf[List[HistoryData]]
+                  }
+                }
+              case None =>
+                complete {
+                  List.empty[List[HistoryData]]
+                }
             }
           }
         }
@@ -104,11 +118,13 @@ object Boot extends App {
       post {
         path("upload") {
           entity(as[DAGraph]) { data =>
-            currentGraph ! UpdateGraph(data)
+            val newGraphAck = system.actorOf(Props(classOf[GraphActor], data, mqttActor), Constants.Actors.Graph)
+            currentGraph = Some(newGraphAck)
+            executorActor ! UpdateGraph(newGraphAck)
             complete(s"$data recieved")
           }
         }
       }
   }
-  Http().bindAndHandle(routes, "0.0.0.0", 8080)
+  Http().bindAndHandle(routes, Configs.Swirl.Http.host, Configs.Swirl.Http.port)
 }
