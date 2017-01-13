@@ -17,9 +17,10 @@ object TwitterSentiment extends MistJob with MQTTPublisher {
   override def doStuff(parameters: Map[String, Any]): Map[String, Any] = {
     context.setLogLevel("INFO")
 
+    val modelPath = parameters("model").asInstanceOf[String]
     val ssc = new StreamingContext(context, Seconds(10))
     val stream = TwitterUtils.createStream(ssc, None, Array("#usa"))
-    val model = NaiveBayesModel.load(context, "/models/NaiveBayes")
+    val model = NaiveBayesModel.load(context, modelPath)
     val hashingTF = new HashingTF(1000)
 
     stream.foreachRDD { (rdd) =>
