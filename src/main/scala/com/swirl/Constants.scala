@@ -11,7 +11,7 @@ object Constants {
     final val Graph = "GraphActor"
     final val Job = "JobActor"
     final val Mqtt = "MqttActor"
-    final val StreamListener= "StreamListenerActor"
+    final val StreamListener = "StreamListenerActor"
   }
 
   object Paths {
@@ -20,7 +20,9 @@ object Constants {
   }
 
   object Config {
+
     object Mist {
+
       object Mqtt {
         final val Host = "mist.mqtt.host"
         final val Port = "mist.mqtt.port"
@@ -32,6 +34,9 @@ object Constants {
         final val Host = "mist.http.host"
         final val Port = "mist.http.port"
       }
+
     }
+
   }
+
 }

@@ -9,27 +9,28 @@ import java.util.UUID
 
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.Http
-import akka.stream.ActorMaterializer
 import akka.pattern.ask
+import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import ch.megard.akka.http.cors.CorsSettings
 import com.sandinh.paho.akka.{MqttPubSub, PSConfig}
-import com.swirl.actors.{GraphActor, MqttActor}
-import com.swirl.data.dag.{Graph, Node}
-import com.swirl.data.HistoryData
 import com.swirl.Messages.GraphActor.{GetGraph, GetHistory}
 import com.swirl.Messages.MqttActor.UpdateGraph
+import com.swirl.actors.{GraphActor, MqttActor}
+import com.swirl.data.HistoryData
+import com.swirl.data.dag.{Graph, Node}
 import com.typesafe.config.ConfigFactory
 
-
 object Boot extends App {
+
   import spray.json._
   import DefaultJsonProtocol._
-  import akka.http.scaladsl.server.Directives._
   import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+  import akka.http.scaladsl.server.Directives._
   import ch.megard.akka.http.cors.CorsDirectives._
-  import scala.concurrent.duration._
+
   import scala.collection.JavaConversions._
+  import scala.concurrent.duration._
 
   implicit val system = ActorSystem(Constants.Actors.ActorSystem)
   implicit val materializer = ActorMaterializer()
@@ -50,9 +51,6 @@ object Boot extends App {
     reconnectDelayMax = 30.seconds
   )), Constants.Actors.Mqtt)
   val executorActor = system.actorOf(Props(classOf[MqttActor], mqttActor), Constants.Actors.StreamListener)
-
-  var currentGraph = Option.empty[ActorRef]
-
   val settings = CorsSettings.defaultSettings
   val routes = cors(settings) {
     get {
@@ -126,5 +124,6 @@ object Boot extends App {
         }
       }
   }
+  var currentGraph = Option.empty[ActorRef]
   Http().bindAndHandle(routes, Configs.Swirl.Http.host, Configs.Swirl.Http.port)
 }

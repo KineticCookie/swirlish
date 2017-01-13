@@ -6,6 +6,7 @@ import spray.json.{DeserializationException, JsFalse, JsNumber, JsString, JsTrue
   * Created by bulat on 14.12.16.
   */
 object MapFormat {
+
   implicit object _AnyJsonFormat extends JsonFormat[Any] {
     def write(x: Any) = x match {
       case n: Int => JsNumber(n)
@@ -14,6 +15,7 @@ object MapFormat {
       case b: Boolean if !b => JsFalse
       case x => throw DeserializationException(x.toString)
     }
+
     def read(value: JsValue) = value match {
       case JsNumber(n) => n.intValue()
       case JsString(s) => s

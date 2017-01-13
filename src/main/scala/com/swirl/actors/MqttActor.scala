@@ -4,16 +4,16 @@ import java.util.UUID
 
 import akka.actor.ActorRef
 import com.sandinh.paho.akka.{Message, Publish, Subscribe, SubscribeAck}
-import com.swirl.data.JobResult
-import com.swirl.Messages
 import com.swirl.Messages.GraphActor.StartJob
 import com.swirl.Messages.MqttActor.UpdateGraph
-import com.swirl.{Configs, Constants}
+import com.swirl.data.JobResult
+import com.swirl.{Configs, Constants, Messages}
 
 /**
   * Created by bulat on 21.12.16.
   */
 class MqttActor(val mqttAck: ActorRef) extends LoggableActor {
+
   import spray.json._
   import DefaultJsonProtocol._
   import com.swirl.utils.json.MapFormat._
@@ -65,7 +65,7 @@ class MqttActor(val mqttAck: ActorRef) extends LoggableActor {
 
       val json = str.parseJson
       val jsObj = json.asJsObject
-      if(jsObj.fields.contains("request")) {
+      if (jsObj.fields.contains("request")) {
         val resp = json.convertTo[JobResult]
         resp.request.externalId foreach { id =>
           val uuid = UUID.fromString(id)

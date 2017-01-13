@@ -7,22 +7,24 @@ import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 import scala.collection.mutable.ListBuffer
 
 case class Graph(nodes: Seq[Node], links: Seq[Link]) {
-  def in (node: Node): Seq[Link] = in(node.uid)
-  def out(node: Node): Seq[Link] = out(node.uid)
+  def in(node: Node): Seq[Link] = in(node.uid)
 
   def in(id: UUID): Seq[Link] = links.filter(_.destination == id)
+
+  def out(node: Node): Seq[Link] = out(node.uid)
+
   def out(id: UUID): Seq[Link] = links.filter(_.source == id)
 
+  def root: Node = roots.head
+
   def roots: Seq[Node] = {
-    if(links.nonEmpty) {
+    if (links.nonEmpty) {
       val destinations = links.map(_.destination)
       nodes.filter(x => !destinations.contains(x.uid))
     } else {
       nodes
     }
   }
-
-  def root: Node = roots.head
 
   /**
     * returns true if graph has no cycles;

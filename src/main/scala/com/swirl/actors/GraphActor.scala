@@ -1,10 +1,12 @@
 package com.swirl.actors
 
+import java.util.UUID
+
 import akka.actor.ActorRef
-import com.swirl.data._
-import com.swirl.data.dag.{Graph, Node}
 import com.swirl.Messages.GraphActor.{GetGraph, GetHistory, StartJob}
 import com.swirl.Messages.MqttActor.{JobFinished, StreamData}
+import com.swirl.data._
+import com.swirl.data.dag.{Graph, Link, Node}
 import com.swirl.utils.Time
 
 import scala.collection.mutable
@@ -14,10 +16,10 @@ import scala.collection.mutable.ListBuffer
   * Created by Bulat on 02.12.2016.
   */
 class GraphActor(val graph: Graph, val mqttAck: ActorRef) extends LoggableActor {
-  val msgQueue = graph.links.map { link =>
+  val msgQueue: Map[Link, mutable.Queue[JobResult]] = graph.links.map { link =>
     link -> mutable.Queue.empty[JobResult]
   }.toMap
-  val history = graph.nodes.map { node =>
+  val history: Map[UUID, ListBuffer[HistoryData]] = graph.nodes.map { node =>
     node.uid -> ListBuffer.empty[HistoryData]
   }.toMap
 
@@ -26,7 +28,7 @@ class GraphActor(val graph: Graph, val mqttAck: ActorRef) extends LoggableActor 
       log.info("Recieved streaming job data...")
 
       val roots = graph.roots
-      sendJobRequests(roots, payload)
+      sendJobRequest(roots, payload)
 
     case JobFinished(uuid, result) =>
       log.info("Recieved job result data...")
@@ -65,16 +67,16 @@ class GraphActor(val graph: Graph, val mqttAck: ActorRef) extends LoggableActor 
       sender() ! graph
   }
 
-  def sendJobRequest(node: Node, data: Map[String, Any]) = {
+  def sendJobRequest(nodes: Seq[Node], data: Map[String, Any]): Unit = {
+    nodes.foreach(sendJobRequest(_, data))
+  }
+
+  def sendJobRequest(node: Node, data: Map[String, Any]): Unit = {
     val request = JobRequest(
       route = node.url,
       parameters = data,
       externalId = Some(node.uid.toString)
     )
     mqttAck ! StartJob(request)
-  }
-
-  def sendJobRequests(nodes: Seq[Node], data: Map[String, Any]) = {
-    nodes.foreach(sendJobRequest(_, data))
   }
 }
